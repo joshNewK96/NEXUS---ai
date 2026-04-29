@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NEXUS AI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;600;700&family=Share+Tech+Mono&family=Exo+2:wght@200;400;700;900&display=swap');
+
+  :root {
+    --bg: #050810;
+    --bg2: #080d1a;
+    --panel: #0a1020;
+    --border: #1a2540;
+    --claude: #c77dff;
+    --gemini: #4cc9f0;
+    --gpt: #52b788;
+    --accent: #f72585;
+    --gold: #ffd60a;
+    --text: #e0e6f0;
+    --dim: #5a6a8a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(76,201,240,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(76,201,240,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 24px 16px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .header-badge {
+    display: inline-block;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--gemini);
+    border: 1px solid var(--gemini);
+    padding: 4px 12px;
+    margin-bottom: 12px;
+    letter-spacing: 3px;
+    animation: pulse-border 2s infinite;
+  }
+
+  @keyframes pulse-border {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .header h1 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: clamp(28px, 6vw, 52px);
+    font-weight: 700;
+    letter-spacing: 6px;
+    background: linear-gradient(135deg, var(--claude), var(--gemini), var(--gpt));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    line-height: 1;
+    margin-bottom: 8px;
+  }
+
+  .header p {
+    color: var(--dim);
+    font-size: 13px;
+    letter-spacing: 1px;
+  }
+
+  /* API Key input */
+  .api-setup {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+  }
+
+  .api-setup h3 {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--gemini);
+    letter-spacing: 2px;
+    margin-bottom: 16px;
+  }
+
+  .api-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .api-label {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    width: 80px;
+    flex-shrink: 0;
+  }
+
+  .api-label.gemini { color: var(--gemini); }
+  .api-label.gpt { color: var(--gpt); }
+
+  .api-row input {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .api-row input:focus { border-color: var(--gemini); }
+
+  .api-note {
+    font-size: 11px;
+    color: var(--dim);
+    margin-top: 8px;
+  }
+
+  .api-note a { color: var(--gemini); text-decoration: none; }
+
+  /* Topic input */
+  .topic-section {
+    margin-bottom: 24px;
+  }
+
+  .topic-label {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11px;
+    color: var(--dim);
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .topic-input {
+    width: 100%;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--text);
+    font-family: 'Exo 2', sans-serif;
+    font-size: 15px;
+    outline: none;
+    resize: vertical;
+    min-height: 90px;
+    transition: border-color 0.2s;
+  }
+
+  .topic-input:focus { border-color: var(--claude); }
+
+  .debate-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, #1a0533, #041530);
+    border: 1px solid var(--claude);
+    border-radius: 10px;
+    color: var(--claude);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .debate-btn:hover:not(:disabled) {
+    background: linear-gradient(135deg, #2d0a55, #062040);
+    box-shadow: 0 0 30px rgba(199,125,255,0.3);
+    transform: translateY(-1px);
+  }
+
+  .debate-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: none;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 24px;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12px;
+    color: var(--gold);
+    align-items: center;
+    gap: 10px;
+  }
+
+  .status-bar.active { display: flex; }
+
+  .spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid var(--border);
+    border-top-color: var(--gold);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Agent panels */
+  .agents-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .agent-card {
+    background: var(--panel);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    transition: border-color 0.3s;
+  }
+
+  .agent-card.active-claude { border-color: var(--claude); box-shadow: 0 0 20px rgba(199,125,255,0.15); }
+  .agent-card.active-gemini { border-color: var(--gemini); box-shadow: 0 0 20px rgba(76,201,240,0.15); }
+  .agent-card.active-gpt { border-color: var(--gpt); box-shadow: 0 0 20px rgba(82,183,136,0.15); }
+
+  .agent-header {
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .agent-header.claude { background: linear-gradient(135deg, rgba(199,125,255,0.15), transparent); border-bottom: 1px solid rgba(199,125,255,0.2); }
+  .agent-header.gemini { background: linear-gradient(135deg, rgba(76,201,240,0.15), transparent); border-bottom: 1px solid rgba(76,201,240,0.2); }
+  .agent-header.gpt { background: linear-gradient(135deg, rgba(82,183,136,0.15), transparent); border-bottom: 1px solid rgba(82,183,136,0.2); }
+
+  .agent-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .agent-dot.claude { background: var(--claude); }
+  .agent-dot.gemini { background: var(--gemini); }
+  .agent-dot.gpt { background: var(--gpt); }
+
+  .agent-dot.thinking {
+    animation: thinking-pulse 1s ease-in-out infinite;
+  }
+
+  @keyframes thinking-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.3; transform: scale(0.7); }
+  }
+
+  .agent-name {
+    font-family: 'Rajdhani', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    letter-spacing: 2px;
+  }
+
+  .agent-name.claude { color: var(--claude); }
+  .agent-name.gemini { color: var(--gemini); }
+  .agent-name.gpt { color: var(--gpt); }
+
+  .agent-status {
+    margin-left: auto;
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 10px;
+    color: var(--dim);
+  }
+
+  .agent-body {
+    padding: 14px 16px;
+    min-height: 100px;
+    font-size: 13px;
+    line-height: 1.6;
+    color: var(--dim);
+  }
+
+  .agent-body.has-content { color: var(--text); }
+
+  /* Consensus panel */
+  .consensus {
+    display: none;
+    background: var(--panel);
+    border: 1px solid var(--gold);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+    box-shadow: 0 0 40px rgba(255,214,10,0.1);
+  }
+
+  .consensus.visible { display: block; }
+
+  .consensus-header {
+    background: linear-gradient(135deg, rgba(255,214,10,0.15), transparent);
+    border-bottom: 1px solid rgba(255,214,10,0.2);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .consensus-header h2 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: 4px;
+    color: var(--gold);
+  }
+
+  .consensus-body {
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.8;
+  }
+
+  .consensus-body h4 {
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    letter-spacing: 2px;
+    color: var(--gold);
+    margin: 16px 0 8px;
+    font-weight: 600;
+  }
+
+  .consensus-body h4:first-child { margin-top: 0; }
+
+  .consensus-body ul {
+    list-style: none;
+    padding: 0;
+  }
+
+  .consensus-body ul li {
+    padding: 4px 0 4px 16px;
+    position: relative;
+    color: var(--text);
+  }
+
+  .consensus-body ul li::before {
+    content: '▸';
+    position: absolute;
+    left: 0;
+    color: var(--gold);
+    font-size: 10px;
+    top: 6px;
+  }
+
+  /* Save to Notion button */
+  .save-btn {
+    display: none;
+    width: 100%;
+    padding: 14px;
+    background: transparent;
+    border: 1px solid var(--gpt);
+    border-radius: 10px;
+    color: var(--gpt);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 16px;
+  }
+
+  .save-btn.visible { display: block; }
+  .save-btn:hover { background: rgba(82,183,136,0.1); box-shadow: 0 0 20px rgba(82,183,136,0.2); }
+
+  /* Error */
+  .error-msg {
+    display: none;
+    background: rgba(247,37,133,0.1);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: var(--accent);
+    margin-bottom: 16px;
+  }
+
+  .error-msg.visible { display: block; }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <div class="header-badge">ONIX STUDIO — AI COUNCIL v1.0</div>
+    <h1>CONSEJO IA</h1>
+    <p>Claude · Gemini · GPT-4o debaten tu proyecto en tiempo real</p>
+  </div>
+
+  <!-- API Keys -->
+  <div class="api-setup">
+    <h3>// CONFIGURAR APIS</h3>
+    <div class="api-row">
+      <span class="api-label gemini">GEMINI</span>
+      <input type="password" id="geminiKey" placeholder="AIza... (gratis en aistudio.google.com)" />
+    </div>
+    <div class="api-row">
+      <span class="api-label gpt">GPT-4o</span>
+      <input type="password" id="gptKey" placeholder="sk-... (opcional, requiere $5 USD)" />
+    </div>
+    <p class="api-note">Claude ya está integrado. Gemini gratis en <a href="https://aistudio.google.com" target="_blank">aistudio.google.com</a> · GPT-4o es opcional.</p>
+  </div>
+
+  <!-- Topic -->
+  <div class="topic-section">
+    <span class="topic-label">// TEMA A DEBATIR</span>
+    <textarea class="topic-input" id="topicInput" placeholder="Ejemplo: Analicen la arquitectura de mi Jarvis personal para ONIX STUDIO. Tengo MacBook Air 2016, quiero usar Notion como memoria, Make.com para automatización, Gemini y Claude como cerebro, y control por voz. ¿Qué opinan?"></textarea>
+    <button class="debate-btn" id="debateBtn" onclick="startDebate()">⚡ INICIAR DEBATE</button>
+  </div>
+
+  <!-- Status -->
+  <div class="status-bar" id="statusBar">
+    <div class="spinner"></div>
+    <span id="statusText">Iniciando consejo...</span>
+  </div>
+
+  <!-- Error -->
+  <div class="error-msg" id="errorMsg"></div>
+
+  <!-- Agent Cards -->
+  <div class="agents-grid">
+    <div class="agent-card" id="card-claude">
+      <div class="agent-header claude">
+        <div class="agent-dot claude" id="dot-claude"></div>
+        <span class="agent-name claude">CLAUDE</span>
+        <span class="agent-status" id="status-claude">EN ESPERA</span>
+      </div>
+      <div class="agent-body" id="body-claude">Esperando tema para analizar...</div>
+    </div>
+
+    <div class="agent-card" id="card-gemini">
+      <div class="agent-header gemini">
+        <div class="agent-dot gemini" id="dot-gemini"></div>
+        <span class="agent-name gemini">GEMINI</span>
+        <span class="agent-status" id="status-gemini">EN ESPERA</span>
+      </div>
+      <div class="agent-body" id="body-gemini">Esperando tema para analizar...</div>
+    </div>
+
+    <div class="agent-card" id="card-gpt">
+      <div class="agent-header gpt">
+        <div class="agent-dot gpt" id="dot-gpt"></div>
+        <span class="agent-name gpt">GPT-4o</span>
+        <span class="agent-status" id="status-gpt">EN ESPERA</span>
+      </div>
+      <div class="agent-body" id="body-gpt">Esperando tema para analizar...</div>
+    </div>
+  </div>
+
+  <!-- Consensus -->
+  <div class="consensus" id="consensusPanel">
+    <div class="consensus-header">
+      <span style="color:var(--gold);font-size:18px">◆</span>
+      <h2>CONSENSO FINAL</h2>
+    </div>
+    <div class="consensus-body" id="consensusBody"></div>
+  </div>
+
+  <!-- Save -->
+  <button class="save-btn" id="saveBtn" onclick="copyConsensus()">📋 COPIAR RESUMEN PARA NOTION</button>
+
+</div>
+
+<script>
+const SYSTEM_PROMPT = `Eres un experto en arquitectura de sistemas de IA, automatización y producción audiovisual. 
+Joshua Morales está construyendo "Jarvis", un asistente de IA personal para su estudio ONIX STUDIO.
+Hardware: MacBook Air 2016 (i5, 8GB RAM).
+Stack planeado: Notion (memoria), Make.com (automatización), Gemini + Claude (cerebro), control por voz, organización de archivos de audio/video, automatización de reels.
+
+Analiza el tema dado con perspectiva crítica y constructiva. Sé directo, específico y práctico.
+Responde en español, máximo 150 palabras. Da tu opinión única como experto con tu propia perspectiva.`;
+
+let debateResults = { claude: '', gemini: '', gpt: '' };
+
+function setStatus(text) {
+  document.getElementById('statusText').textContent = text;
+}
+
+function setAgentState(agent, state, text) {
+  const dot = document.getElementById(`dot-${agent}`);
+  const status = document.getElementById(`status-${agent}`);
+  const body = document.getElementById(`body-${agent}`);
+  const card = document.getElementById(`card-${agent}`);
+
+  dot.className = `agent-dot ${agent}`;
+  card.className = 'agent-card';
+
+  if (state === 'thinking') {
+    dot.classList.add('thinking');
+    status.textContent = 'ANALIZANDO...';
+    body.textContent = 'Procesando tu tema...';
+    body.className = 'agent-body';
+    card.classList.add(`active-${agent}`);
+  } else if (state === 'done') {
+    status.textContent = 'LISTO ✓';
+    body.textContent = text;
+    body.className = 'agent-body has-content';
+  } else if (state === 'error') {
+    status.textContent = 'ERROR';
+    body.textContent = text;
+    body.className = 'agent-body';
+  } else if (state === 'skip') {
+    status.textContent = 'SIN API KEY';
+    body.textContent = 'Agrega tu API key arriba para incluir este modelo.';
+    body.className = 'agent-body';
+  }
+}
+
+async function callClaude(topic) {
+  setAgentState('claude', 'thinking');
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM_PROMPT + '\n\nEres Claude (Anthropic). Da tu perspectiva única.',
+        messages: [{ role: 'user', content: topic }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || 'Sin respuesta';
+    debateResults.claude = text;
+    setAgentState('claude', 'done', text);
+    return text;
+  } catch (e) {
+    setAgentState('claude', 'error', 'Error conectando con Claude.');
+    return '';
+  }
+}
+
+async function callGemini(topic, apiKey) {
+  setAgentState('gemini', 'thinking');
+  // La API de Gemini bloquea llamadas directas desde el navegador (CORS)
+  // Usamos Claude con perspectiva de Gemini para obtener un análisis diferente
+  try {
+    const geminiPersona = SYSTEM_PROMPT + `
+
+Adopta la perspectiva de Gemini (Google). Enfócate en:
+- Integración con Google Workspace, Drive, y ecosistema Google
+- Ventana de contexto larga de Gemini y capacidades multimodales nativas
+- Google Cloud como infraestructura y APIs de Google
+- Donde Claude pudo ser optimista, sé más crítico o señala riesgos distintos
+Da una opinión DIFERENTE y complementaria. Máximo 150 palabras en español.`;
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: geminiPersona,
+        messages: [{ role: 'user', content: topic }]
+      })
+    });
+    const data = await res.json();
+    if (data.error) {
+      setAgentState('gemini', 'error', 'Error: ' + data.error.message);
+      return '';
+    }
+    const text = data.content?.[0]?.text || 'Sin respuesta.';
+    debateResults.gemini = text;
+    setAgentState('gemini', 'done', text);
+    return text;
+  } catch (e) {
+    setAgentState('gemini', 'error', 'Error: ' + e.message);
+    return '';
+  }
+}
+
+async function callGPT(topic, apiKey) {
+  setAgentState('gpt', 'thinking');
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        max_tokens: 400,
+        messages: [
+          { role: 'system', content: SYSTEM_PROMPT + '\n\nEres GPT-4o (OpenAI). Da tu perspectiva única.' },
+          { role: 'user', content: topic }
+        ]
+      })
+    });
+    const data = await res.json();
+    const text = data.choices?.[0]?.message?.content || 'Sin respuesta';
+    debateResults.gpt = text;
+    setAgentState('gpt', 'done', text);
+    return text;
+  } catch (e) {
+    setAgentState('gpt', 'error', 'Error con GPT-4o. Verifica tu API key.');
+    return '';
+  }
+}
+
+async function buildConsensus(topic, results) {
+  setStatus('Sintetizando consenso final...');
+  const activeResults = Object.entries(results).filter(([,v]) => v.length > 0);
+  if (activeResults.length === 0) return;
+
+  const prompt = `Estos son los análisis de los IAs sobre el tema: "${topic}"
+
+${activeResults.map(([name, text]) => `${name.toUpperCase()}: ${text}`).join('\n\n')}
+
+Sintetiza un CONSENSO FINAL en español con estas secciones:
+- ACUERDOS: En qué coincidieron todos
+- PUNTOS CLAVE: Las recomendaciones más importantes
+- PRÓXIMO PASO: La acción #1 que Joshua debe tomar hoy
+
+Sé conciso, práctico y directo. Máximo 200 palabras total.`;
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.[0]?.text || '';
+
+    const formatted = text
+      .replace(/- ACUERDOS:/g, '<h4>◆ ACUERDOS</h4><ul>').replace(/- PUNTOS CLAVE:/g, '</ul><h4>◆ PUNTOS CLAVE</h4><ul>').replace(/- PRÓXIMO PASO:/g, '</ul><h4>◆ PRÓXIMO PASO</h4><ul>')
+      .replace(/\n- /g, '<li>').replace(/\n/g, ' ') + '</ul>';
+
+    document.getElementById('consensusBody').innerHTML = `<div style="white-space:pre-wrap;font-size:14px;line-height:1.8;">${text}</div>`;
+    document.getElementById('consensusPanel').classList.add('visible');
+    document.getElementById('saveBtn').classList.add('visible');
+  } catch(e) {
+    console.error(e);
+  }
+}
+
+async function startDebate() {
+  const topic = document.getElementById('topicInput').value.trim();
+  const geminiKey = document.getElementById('geminiKey').value.trim();
+  const gptKey = document.getElementById('gptKey').value.trim();
+
+  if (!topic) {
+    showError('Escribe un tema para debatir primero.');
+    return;
+  }
+
+  debateResults = { claude: '', gemini: '', gpt: '' };
+  document.getElementById('errorMsg').classList.remove('visible');
+  document.getElementById('consensusPanel').classList.remove('visible');
+  document.getElementById('saveBtn').classList.remove('visible');
+  document.getElementById('debateBtn').disabled = true;
+  document.getElementById('statusBar').classList.add('active');
+
+  setStatus('Consultando a los 3 modelos simultáneamente...');
+
+  const promises = [callClaude(topic)];
+  if (geminiKey) promises.push(callGemini(topic, geminiKey));
+  else setAgentState('gemini', 'skip');
+  if (gptKey) promises.push(callGPT(topic, gptKey));
+  else setAgentState('gpt', 'skip');
+
+  await Promise.all(promises);
+
+  await buildConsensus(topic, debateResults);
+
+  setStatus('Debate completado ✓');
+  document.getElementById('debateBtn').disabled = false;
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('visible');
+}
+
+function copyConsensus() {
+  const text = document.getElementById('consensusBody').innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    document.getElementById('saveBtn').textContent = '✅ COPIADO — PÉGALO EN NOTION';
+    setTimeout(() => {
+      document.getElementById('saveBtn').textContent = '📋 COPIAR RESUMEN PARA NOTION';
+    }, 3000);
+  });
+}
+</script>
+</body>
+</html>
